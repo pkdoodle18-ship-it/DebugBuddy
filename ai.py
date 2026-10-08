@@ -21,6 +21,7 @@ Rules:
 - "concept" is a short explanation of the underlying idea with a tiny example.
 - Write "explanation", "hints", and "concept" in the language the student asks for.
   Keep code, variable names, and error names (like IndexError) in English.
+- Adjust to the student level given: for "Complete beginner" use very simple words, short sentences and everyday analogies; for "I know the basics" you may use normal programming terms.
 - Never invent errors that are not in the code."""
 
 EMPTY = {
@@ -37,13 +38,14 @@ def number_lines(code):
     return "\n".join(f"{i}: {line}" for i, line in enumerate(code.splitlines(), 1))
 
 
-def analyze_error(code, error, language="Python", mode="learn", explain_in="English"):
+def analyze_error(code, error, language="Python", mode="learn", explain_in="English", level="Complete beginner"):
     if not code.strip() or not error.strip():
         return {**EMPTY, "explanation": "Please paste both your code and the error."}
 
     user_msg = (
         f"Language: {language}\n"
-        f"Explain in: {explain_in}\n\n"
+        f"Explain in: {explain_in}\n"
+        f"Student level: {level}\n\n"
         f"Code:\n{number_lines(code)}\n\nError:\n{error}"
     )
     try:

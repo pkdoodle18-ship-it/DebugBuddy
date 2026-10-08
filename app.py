@@ -83,6 +83,7 @@ st.caption("Paste your code and error. Learn why it broke, not just how to fix i
 language = st.selectbox("Language", ["Python", "C", "Java", "JavaScript"])
 mode = st.radio("Mode", ["Learn (hints)", "Fix (show answer)"], horizontal=True)
 explain_in = st.selectbox("Explain in", ["English", "Tamil", "Malayalam", "Hindi"])
+level = st.selectbox("Your level", ["Complete beginner", "I know the basics"])
 
 st.selectbox(
     "Try an example (Python)",
@@ -98,7 +99,7 @@ if st.button("Help me understand"):
         res = analyze_error(
             code, error, language,
             "learn" if mode.startswith("Learn") else "fix",
-            explain_in,
+            explain_in, level,
         )
         st.session_state["result"] = res
         st.session_state["shown"] = 0
