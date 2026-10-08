@@ -1,5 +1,6 @@
 import streamlit as st
 from ai import analyze_error
+from practice import make_practice
 
 st.set_page_config(page_title="DebugBuddy", page_icon="🐞")
 st.title("🐞 DebugBuddy")
@@ -19,6 +20,7 @@ if st.button("Help me understand"):
             explain_in,
         )
         st.session_state["shown"] = 0
+        st.session_state["practice"] = None
 
 result = st.session_state.get("result")
 if result:
@@ -40,3 +42,18 @@ if result:
     if result["concept"]:
         st.subheader("Concept")
         st.write(result["concept"])
+
+    st.divider()
+    if st.button("Give me a practice problem"):
+        with st.spinner("Creating a practice problem..."):
+            st.session_state["practice"] = make_practice(
+                result["error_type"], result["concept"], language, explain_in
+            )
+
+    practice = st.session_state.get("practice")
+    if practice:
+        st.subheader("Practice")
+        st.write(practice["task"])
+        st.code(practice["starter_code"], language=language.lower())
+        with st.expander("Show solution"):
+            st.code(practice["solution"], language=language.lower())
