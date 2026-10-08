@@ -2,9 +2,11 @@ import os
 import json
 import requests
 
-API_KEY = os.environ["GROQ_API_KEY"]
+API_KEY = os.environ.get("GROQ_API_KEY")
 URL = "https://api.groq.com/openai/v1/chat/completions"
 MODEL = "openai/gpt-oss-120b"
+OLLAMA_URL = "http://localhost:11434/api/chat"
+OLLAMA_MODEL = "qwen2.5-coder:3b"
 
 SYSTEM_PROMPT = """You are a patient programming teacher for first-year students.
 The student gives you code (with line numbers) and an error message.
@@ -38,7 +40,28 @@ def number_lines(code):
     return "\n".join(f"{i}: {line}" for i, line in enumerate(code.splitlines(), 1))
 
 
-def analyze_error(code, error, language="Python", mode="learn", explain_in="English", level="Complete beginner"):
+def _call_model(messages, provider):
+    if provider.startswith("Ollama"):
+        r = requests.post(
+            OLLAMA_URL,
+            json={"model": OLLAMA_MODEL, "messages": messages,
+                  "stream": False, "format": "json"},
+            timeout=180,
+        )
+        return r.json()["message"]["content"]
+    r = requests.post(
+        URL,
+        headers={"Authorization": f"Bearer {API_KEY}"},
+        json={"model": MODEL, "messages": messages,
+              "response_format": {"type": "json_object"}},
+        timeout=60,
+    )
+    return r.json()["choices"][0]["message"]["content"]
+
+
+def analyze_error(code, error, language="Python", mode="learn",
+                  explain_in="English", level="Complete beginner",
+                  provider="Groq"):
     if not code.strip() or not error.strip():
         return {**EMPTY, "explanation": "Please paste both your code and the error."}
 
@@ -48,21 +71,12 @@ def analyze_error(code, error, language="Python", mode="learn", explain_in="Engl
         f"Student level: {level}\n\n"
         f"Code:\n{number_lines(code)}\n\nError:\n{error}"
     )
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_msg},
+    ]
     try:
-        r = requests.post(
-            URL,
-            headers={"Authorization": f"Bearer {API_KEY}"},
-            json={
-                "model": MODEL,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": user_msg},
-                ],
-                "response_format": {"type": "json_object"},
-            },
-            timeout=60,
-        )
-        data = json.loads(r.json()["choices"][0]["message"]["content"])
+        data = json.loads(_call_model(messages, provider))
     except Exception as e:
         print("Error:", e)
         return EMPTY
@@ -71,10 +85,3 @@ def analyze_error(code, error, language="Python", mode="learn", explain_in="Engl
     if mode == "learn":
         result["fix"] = ""  # hide the answer in learn mode
     return result
-
-
-if __name__ == "__main__":
-    test_code = """name = "Asha"
-print("Hello " + nme)"""
-    test_error = "NameError: name 'nme' is not defined"
-    print(json.dumps(analyze_error(test_code, test_error, mode="fix", explain_in="Tamil"), indent=2, ensure_ascii=False))

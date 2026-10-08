@@ -1,6 +1,10 @@
+import os
 import streamlit as st
 from ai import analyze_error
 from practice import make_practice
+from runner import run_python
+
+RUN_ENABLED = os.environ.get("ENABLE_RUN") == "1"
 
 EXAMPLES = {
     "IndexError": (
@@ -57,9 +61,18 @@ def load_example():
         st.session_state["code"], st.session_state["error"] = EXAMPLES[choice]
 
 
+def clear_all():
+    st.session_state["code"] = ""
+    st.session_state["error"] = ""
+    st.session_state["example"] = "- choose -"
+    st.session_state["result"] = None
+    st.session_state["practice"] = None
+    st.session_state["captured"] = None
+
+
 st.set_page_config(page_title="DebugBuddy", page_icon="🐞")
 
-# ---- Sidebar: mistake tracker ----
+# ---- Sidebar: mistake tracker + model choice ----
 history = st.session_state.setdefault("history", [])
 with st.sidebar:
     st.header("📊 Your mistakes")
@@ -77,13 +90,32 @@ with st.sidebar:
     else:
         st.caption("Analyze an error and your mistakes will show up here.")
 
+    st.divider()
+    st.header("⚙️ AI model")
+    provider = st.selectbox("Run with", ["Groq (gpt-oss-120b)", "Ollama (local)"])
+    if provider.startswith("Ollama"):
+        st.caption("Needs Ollama running on your own computer. It will not work on the public demo.")
+
 st.title("🐞 DebugBuddy")
 st.caption("Paste your code and error. Learn why it broke, not just how to fix it.")
+
+with st.expander("How does this work?"):
+    st.markdown(
+        "- **Learn mode** gives you 3 hints, one at a time, so you can try to solve it yourself.\n"
+        "- **Fix mode** shows the corrected code.\n"
+        "- Pick your language and level, then use **practice problem** to train on the same kind of mistake."
+    )
 
 language = st.selectbox("Language", ["Python", "C", "Java", "JavaScript"])
 mode = st.radio("Mode", ["Learn (hints)", "Fix (show answer)"], horizontal=True)
 explain_in = st.selectbox("Explain in", ["English", "Tamil", "Malayalam", "Hindi"])
 level = st.selectbox("Your level", ["Complete beginner", "I know the basics"])
+
+run_mode = False
+if RUN_ENABLED:
+    run_mode = st.checkbox("Run my code for me (Python only): I'll find the error automatically")
+else:
+    st.caption("Auto-run is switched off on the public demo for safety.")
 
 st.selectbox(
     "Try an example (Python)",
@@ -92,21 +124,53 @@ st.selectbox(
     on_change=load_example,
 )
 code = st.text_area("Your code", height=200, key="code")
-error = st.text_area("Error message", height=100, key="error")
+if run_mode:
+    error = ""
+else:
+    error = st.text_area("Error message", height=100, key="error")
 
-if st.button("Help me understand"):
-    with st.spinner("Thinking..."):
-        res = analyze_error(
-            code, error, language,
-            "learn" if mode.startswith("Learn") else "fix",
-            explain_in, level,
-        )
-        st.session_state["result"] = res
-        st.session_state["shown"] = 0
-        st.session_state["practice"] = None
-        if res["error_type"] != "Unknown":
-            st.session_state["history"].append(res["error_type"])
-            st.rerun()
+col1, col2 = st.columns([3, 1])
+go = col1.button("Help me understand", type="primary")
+col2.button("Clear", on_click=clear_all)
+
+if go:
+    err_text = error
+    proceed = True
+    st.session_state["captured"] = None
+
+    if run_mode:
+        if not code.strip():
+            st.warning("Please paste your code first.")
+            proceed = False
+        else:
+            with st.spinner("Running your code..."):
+                out, err_text = run_python(code)
+            if not err_text.strip():
+                st.success("Your program ran without any errors!")
+                if out:
+                    st.code(out)
+                proceed = False
+            else:
+                st.session_state["captured"] = err_text
+
+    if proceed:
+        with st.spinner("Thinking..."):
+            res = analyze_error(
+                code, err_text, language,
+                "learn" if mode.startswith("Learn") else "fix",
+                explain_in, level, provider,
+            )
+            st.session_state["result"] = res
+            st.session_state["shown"] = 0
+            st.session_state["practice"] = None
+            if res["error_type"] != "Unknown":
+                st.session_state["history"].append(res["error_type"])
+                st.rerun()
+
+captured = st.session_state.get("captured")
+if captured:
+    with st.expander("Error found by running your code"):
+        st.code(captured)
 
 result = st.session_state.get("result")
 if result:
