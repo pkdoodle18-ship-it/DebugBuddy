@@ -2,6 +2,61 @@ import streamlit as st
 from ai import analyze_error
 from practice import make_practice
 
+EXAMPLES = {
+    "IndexError": (
+        """fruits = ["apple", "banana", "mango"]
+for i in range(4):
+    print(fruits[i])""",
+        "IndexError: list index out of range",
+    ),
+    "NameError": (
+        """name = "Asha"
+print("Hello " + nme)""",
+        "NameError: name 'nme' is not defined",
+    ),
+    "TypeError": (
+        """age = 18
+print("I am " + age + " years old")""",
+        'TypeError: can only concatenate str (not "int") to str',
+    ),
+    "SyntaxError": (
+        """x = 5
+if x > 3
+    print("big")""",
+        "SyntaxError: expected ':'",
+    ),
+    "IndentationError": (
+        """def greet():
+print("hi")
+
+greet()""",
+        "IndentationError: expected an indented block after function definition on line 1",
+    ),
+    "ZeroDivisionError": (
+        """a = 10
+b = 0
+print(a / b)""",
+        "ZeroDivisionError: division by zero",
+    ),
+    "KeyError": (
+        """student = {"name": "Asha", "age": 18}
+print(student["grade"])""",
+        "KeyError: 'grade'",
+    ),
+    "ValueError": (
+        """number = int("abc")
+print(number)""",
+        "ValueError: invalid literal for int() with base 10: 'abc'",
+    ),
+}
+
+
+def load_example():
+    choice = st.session_state["example"]
+    if choice in EXAMPLES:
+        st.session_state["code"], st.session_state["error"] = EXAMPLES[choice]
+
+
 st.set_page_config(page_title="DebugBuddy", page_icon="🐞")
 st.title("🐞 DebugBuddy")
 st.caption("Paste your code and error. Learn why it broke, not just how to fix it.")
@@ -9,8 +64,15 @@ st.caption("Paste your code and error. Learn why it broke, not just how to fix i
 language = st.selectbox("Language", ["Python", "C", "Java", "JavaScript"])
 mode = st.radio("Mode", ["Learn (hints)", "Fix (show answer)"], horizontal=True)
 explain_in = st.selectbox("Explain in", ["English", "Tamil", "Malayalam", "Hindi"])
-code = st.text_area("Your code", height=200)
-error = st.text_area("Error message", height=100)
+
+st.selectbox(
+    "Try an example (Python)",
+    ["- choose -"] + list(EXAMPLES),
+    key="example",
+    on_change=load_example,
+)
+code = st.text_area("Your code", height=200, key="code")
+error = st.text_area("Error message", height=100, key="error")
 
 if st.button("Help me understand"):
     with st.spinner("Thinking..."):
