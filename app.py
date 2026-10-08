@@ -58,6 +58,25 @@ def load_example():
 
 
 st.set_page_config(page_title="DebugBuddy", page_icon="🐞")
+
+# ---- Sidebar: mistake tracker ----
+history = st.session_state.setdefault("history", [])
+with st.sidebar:
+    st.header("📊 Your mistakes")
+    if history:
+        counts = {}
+        for e in history:
+            counts[e] = counts.get(e, 0) + 1
+        st.bar_chart(counts)
+        top = max(counts, key=counts.get)
+        st.write(f"Most common: **{top}** ({counts[top]}x)")
+        st.caption("Try the practice problem button to work on it.")
+        if st.button("Clear history"):
+            st.session_state["history"] = []
+            st.rerun()
+    else:
+        st.caption("Analyze an error and your mistakes will show up here.")
+
 st.title("🐞 DebugBuddy")
 st.caption("Paste your code and error. Learn why it broke, not just how to fix it.")
 
@@ -76,13 +95,17 @@ error = st.text_area("Error message", height=100, key="error")
 
 if st.button("Help me understand"):
     with st.spinner("Thinking..."):
-        st.session_state["result"] = analyze_error(
+        res = analyze_error(
             code, error, language,
             "learn" if mode.startswith("Learn") else "fix",
             explain_in,
         )
+        st.session_state["result"] = res
         st.session_state["shown"] = 0
         st.session_state["practice"] = None
+        if res["error_type"] != "Unknown":
+            st.session_state["history"].append(res["error_type"])
+            st.rerun()
 
 result = st.session_state.get("result")
 if result:
