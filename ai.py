@@ -19,6 +19,8 @@ Rules:
   Hint 2 is more specific, Hint 3 almost gives the answer but not the full code.
 - "fix" is the full corrected code, without line numbers.
 - "concept" is a short explanation of the underlying idea with a tiny example.
+- Write "explanation", "hints", and "concept" in the language the student asks for.
+  Keep code, variable names, and error names (like IndexError) in English.
 - Never invent errors that are not in the code."""
 
 EMPTY = {
@@ -35,11 +37,15 @@ def number_lines(code):
     return "\n".join(f"{i}: {line}" for i, line in enumerate(code.splitlines(), 1))
 
 
-def analyze_error(code, error, language="Python", mode="learn"):
+def analyze_error(code, error, language="Python", mode="learn", explain_in="English"):
     if not code.strip() or not error.strip():
         return {**EMPTY, "explanation": "Please paste both your code and the error."}
 
-    user_msg = f"Language: {language}\n\nCode:\n{number_lines(code)}\n\nError:\n{error}"
+    user_msg = (
+        f"Language: {language}\n"
+        f"Explain in: {explain_in}\n\n"
+        f"Code:\n{number_lines(code)}\n\nError:\n{error}"
+    )
     try:
         r = requests.post(
             URL,
@@ -69,4 +75,4 @@ if __name__ == "__main__":
     test_code = """name = "Asha"
 print("Hello " + nme)"""
     test_error = "NameError: name 'nme' is not defined"
-    print(json.dumps(analyze_error(test_code, test_error, mode="fix"), indent=2))
+    print(json.dumps(analyze_error(test_code, test_error, mode="fix", explain_in="Tamil"), indent=2, ensure_ascii=False))
