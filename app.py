@@ -52,6 +52,66 @@ print(student["grade"])""",
 print(number)""",
         "ValueError: invalid literal for int() with base 10: 'abc'",
     ),
+    "AttributeError (List has no lower)": (
+        """names = ["alice", "bob"]
+print(names.lower())""",
+        "AttributeError: 'list' object has no attribute 'lower'",
+    ),
+    "AttributeError (NoneType)": (
+        """numbers = [3, 1, 2]
+sorted_numbers = numbers.sort()
+print(sorted_numbers.append(4))""",
+        "AttributeError: 'NoneType' object has no attribute 'append'",
+    ),
+    "UnboundLocalError": (
+        """count = 0
+
+def increment():
+    count += 1
+    return count
+
+increment()""",
+        "UnboundLocalError: cannot access local variable 'count' where it is not associated with a value",
+    ),
+    "RecursionError": (
+        """def countdown(n):
+    return countdown(n - 1)
+
+countdown(5)""",
+        "RecursionError: maximum recursion depth exceeded",
+    ),
+    "FileNotFoundError": (
+        """with open("missing_notes.txt", "r") as file:
+    content = file.read()""",
+        "FileNotFoundError: [Errno 2] No such file or directory: 'missing_notes.txt'",
+    ),
+    "TypeError (Calling non-function)": (
+        """message = "welcome"
+result = message()""",
+        "TypeError: 'str' object is not callable",
+    ),
+    "TypeError (Argument count)": (
+        """def add(a, b):
+    return a + b
+
+result = add(10)""",
+        "TypeError: add() missing 1 required positional argument: 'b'",
+    ),
+    "ValueError (Too many values to unpack)": (
+        """point = (1, 2, 3)
+x, y = point""",
+        "ValueError: too many values to unpack (expected 2)",
+    ),
+    "ValueError (Not enough values to unpack)": (
+        """coords = [10]
+x, y = coords""",
+        "ValueError: not enough values to unpack (expected 2, got 1)",
+    ),
+    "ZeroDivisionError (Modulo zero)": (
+        """number = 15
+remainder = number % 0""",
+        "ZeroDivisionError: integer modulo by zero",
+    ),
 }
 
 
