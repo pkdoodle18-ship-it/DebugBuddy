@@ -1,3 +1,4 @@
+
 import os
 import streamlit as st
 from ai import analyze_error
@@ -108,7 +109,12 @@ with st.expander("How does this work?"):
 
 language = st.selectbox("Language", ["Python", "C", "Java", "JavaScript"])
 mode = st.radio("Mode", ["Learn (hints)", "Fix (show answer)"], horizontal=True)
-explain_in = st.selectbox("Explain in", ["English", "Tamil", "Malayalam", "Hindi"])
+
+explain_in = st.selectbox(
+    "Explain in",
+    ["English", "Tamil", "Malayalam", "Hindi", "Telugu", "Kannada"]
+)
+
 level = st.selectbox("Your level", ["Complete beginner", "I know the basics"])
 
 run_mode = False
