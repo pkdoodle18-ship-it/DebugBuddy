@@ -11,7 +11,7 @@ First-year students get stuck on cryptic error messages. They often paste them i
 - **Learn mode:** 3 progressive hints, revealed one at a time
 - **Fix mode:** the corrected code with a short explanation
 - Points to the **exact line** and explains the **concept** behind the mistake
-- Explains in **English, Tamil, Malayalam, or Hindi**
+- Explains in **English, Tamil, Malayalam, Hindi, Telugu, or Kannada**
 - **Student level** selector (complete beginner / knows the basics)
 - **Practice problem generator** for the same kind of mistake
 - **Mistake tracker** that shows which errors you make most
